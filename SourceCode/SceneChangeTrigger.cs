@@ -8,6 +8,8 @@ public class SceneChangeTrigger : MonoBehaviour {
 
     bool called = false;
 
+    [SerializeField] private string sceneName = "StageSelectScene";
+
     void Start() {
         called = false;
     }
@@ -17,12 +19,7 @@ public class SceneChangeTrigger : MonoBehaviour {
 
         if (collision.gameObject.CompareTag("Player")) {
             called = true;
-            Change(this.GetCancellationTokenOnDestroy()).Forget();
+            SceneLoader.Instance.LoadScene(sceneName);
         }
-    }
-
-    async UniTask Change(CancellationToken ct) {
-        var nextScene = await SceneLoader.Instance.LoadScene("StageSelectScene", ct);
-        nextScene.allowSceneActivation = true;
     }
 }

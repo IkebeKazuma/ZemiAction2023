@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CameraAreaHandler : MonoBehaviour {
 
-    int currentCameraIndex = -1;
+    public int currentCameraIndex { get; private set; } = -1;
     int prevCameraIndex = -1;
 
     [SerializeField] List<GameObject> cameraList;

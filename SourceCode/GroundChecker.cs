@@ -1,13 +1,23 @@
+using PMP.UnityLib;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using static UnityEngine.UI.Image;
 
 public class GroundChecker : MonoBehaviour {
 
     // 接地しているか
     public bool isGrounded { get; private set; }
+    public void OverrideGroundedState(bool newState, bool withPrevState = false) {
+        isGrounded = newState;
+        if (withPrevState) prevGroundedState = newState;
+    }
+
+    bool prevGroundedState;
+
+    [Header("References")]
+    [SerializeField] PlayerController playerCtrl;
+    [SerializeField] Rigidbody2D rb2d;
 
     [Header("Settings")]
     [SerializeField] Transform castOrigin;
@@ -33,6 +43,8 @@ public class GroundChecker : MonoBehaviour {
     private void OnEnable() {
         onLand = new UnityEvent();
         onLeft = new UnityEvent();
+
+        prevGroundedState = isGrounded = false;
     }
 
     public bool CheckGrounded() {
@@ -44,30 +56,29 @@ public class GroundChecker : MonoBehaviour {
 
         CheckCast();
 
-        if (hitInfo2D.collider && Mathf.Abs(hitInfo2D.point.y - footOrigin.position.y) <= reactiveRange) {
-            if (OnSlope()) {
-                if (groundAngle <= slopeAngleLimit) {
-                    // 斜面
-                    //Debug.Log("斜面");
-                    result = true;
+        if (playerCtrl.isJumping) return isGrounded = prevGroundedState = false;
+        if (playerCtrl.verticalVelocity > 0) return isGrounded = prevGroundedState = false;
+
+        if (hitInfo2D.collider && Mathf.Max(footOrigin.position.y - hitInfo2D.point.y, 0.0f) <= reactiveRange) {
+            if (rb2d.velocity.y.RoundOffToNDecimalPoint(2) <= 0.0f) { result = true; }
+        }
+
+        isGrounded = result;
+
+        // 接地ステート切り替わり
+        if (isGrounded != prevGroundedState) {
+            if (isGrounded) {
+                hitInfo2D = Physics2D.CircleCast(origin, 0.1f, direction, 0.5f, layerMask);
+                if (hitInfo2D.collider) {
+                    onLand?.Invoke();
                 }
-            } else {
-                // 平面
-                //Debug.Log("平面");
-                result = true;
-            }
-        }
-
-        if (isGrounded != result) {
-            // 接地ステート切り替わり
-            if (result == true) {
-                onLand?.Invoke();
-            } else {
+            } else
                 onLeft?.Invoke();
-            }
+
+            prevGroundedState = isGrounded;
         }
 
-        return isGrounded = result;
+        return isGrounded;
     }
 
     RaycastHit2D CheckCast() {

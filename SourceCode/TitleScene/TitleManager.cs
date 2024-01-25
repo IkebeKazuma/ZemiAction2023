@@ -1,39 +1,48 @@
 using Cysharp.Threading.Tasks;
+using KanKikuchi.AudioManager;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
-using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class TitleManager : SingletonMonoBehaviour<TitleManager> {
 
-    [SerializeField] UnityEngine.UI.Button startBtn;
-
     private void Start() {
+        // 初期化
+        Initialize();
+
         MainLoop(this.GetCancellationTokenOnDestroy()).Forget();
     }
 
     async UniTask MainLoop(CancellationToken ct) {
         await UniTask.Yield(ct);
 
-        bool btnPressed = false;
-        startBtn.onClick.AddListener(() => {
-            btnPressed = true;
-        });
-
-        await UniTask.Delay(TimeSpan.FromSeconds(0.5f), cancellationToken: ct);
+        await UniTask.Delay(TimeSpan.FromSeconds(0.1f), cancellationToken: ct);
 
         // フェードイン
         await FadeCanvasManager.Instance.FadeIn(1f, ct);
 
-        // スタートボタン選択
-        startBtn.interactable = true;
-        startBtn.Select();
+        if (!BGMManager.Instance.IsPlaying()) {
+            BGMManager.Instance.Play(BGMPath.STAGE_SELECT);
+            BGMManager.Instance.FadeIn(1.0f);
+        }
 
-        await UniTask.WaitUntil(() => btnPressed);
+        await UniTask.Delay(TimeSpan.FromSeconds(0.1f), cancellationToken: ct);
 
-        var nextScene = await SceneLoader.Instance.LoadScene("StageSelectScene", ct);
-        nextScene.allowSceneActivation = true;
+        // キーアクションを生成
+        InputAction pressAnyKeyAction = new InputAction(type: InputActionType.PassThrough, binding: "*/<Button>", interactions: "Press");
+
+        pressAnyKeyAction.Enable();
+
+        await UniTask.Yield(ct);
+
+        await UniTask.WaitUntil(() => pressAnyKeyAction.triggered, cancellationToken: ct);
+
+        pressAnyKeyAction.Disable();
+
+        SEManager.Instance.Play(SEPath.SUBMIT);
+
+        await SceneLoader.Instance.LoadScene("StageSelectScene", ct);
     }
 
+    void Initialize() { }
 }

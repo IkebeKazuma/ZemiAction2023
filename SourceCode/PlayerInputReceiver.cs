@@ -5,6 +5,9 @@ using UnityEngine.InputSystem;
 
 public class PlayerInputReceiver : MonoBehaviour {
 
+    [SerializeField] PlayerInput playerInput;
+    public PlayerInput PlayerInput { get { return playerInput; } }
+
     [Header("Input Settings")]
     public float inputAcceleration = 20;
     public float inputDeceleration = 20;
@@ -22,6 +25,10 @@ public class PlayerInputReceiver : MonoBehaviour {
 
     public bool action { get; private set; }
 
+    public bool start { get; private set; }
+
+    public bool restart { get; private set; }
+
     public void OnMove(InputAction.CallbackContext context) {
         MoveInput(context.ReadValue<Vector2>());
     }
@@ -34,6 +41,14 @@ public class PlayerInputReceiver : MonoBehaviour {
         ActionInput(context.performed);
     }
 
+    public void OnStart(InputAction.CallbackContext context) {
+        StartInput(context.performed);
+    }
+
+    public void OnRestart(InputAction.CallbackContext context) {
+        RestartInput(context.performed);
+    }
+
     public void MoveInput(Vector2 newMoveDirection) {
         actualMove = ClampedRawInput(newMoveDirection);
     }
@@ -44,6 +59,14 @@ public class PlayerInputReceiver : MonoBehaviour {
 
     public void ActionInput(bool newAttackState) {
         action = newAttackState;
+    }
+
+    public void StartInput(bool newStartInput) {
+        start = newStartInput;
+    }
+
+    public void RestartInput(bool newRestartState) {
+        restart = newRestartState;
     }
 
     public void ResetMoveInput() {
